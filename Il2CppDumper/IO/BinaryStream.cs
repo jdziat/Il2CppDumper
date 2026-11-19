@@ -106,6 +106,20 @@ namespace Il2CppDumper
             };
         }
 
+        /// <summary>True when this v39 metadata stores TypeIndex as int32 rather than uint16.</summary>
+        public bool WideTypeIndexV39;
+        private readonly Dictionary<FieldInfo, bool> typeIndexV39Cache = new();
+
+        protected bool IsTypeIndexV39Field(FieldInfo field)
+        {
+            if (!typeIndexV39Cache.TryGetValue(field, out var result))
+            {
+                result = Attribute.IsDefined(field, typeof(TypeIndexV39Attribute));
+                typeIndexV39Cache.Add(field, result);
+            }
+            return result;
+        }
+
         public T ReadClass<T>(ulong addr) where T : new()
         {
             Position = addr;
@@ -149,7 +163,11 @@ namespace Il2CppDumper
                         }
                     }
                     var fieldType = i.FieldType;
-                    if (fieldType.IsPrimitive)
+                    if (IsTypeIndexV39Field(i))
+                    {
+                        i.SetValue(t, WideTypeIndexV39 ? ReadInt32() : (int)ReadUInt16());
+                    }
+                    else if (fieldType.IsPrimitive)
                     {
                         i.SetValue(t, ReadPrimitive(fieldType));
                     }

@@ -60,6 +60,22 @@ namespace Il2CppDumper
             }
             Version = version;
             header = ReadClass<Il2CppGlobalMetadataHeader>(0);
+            if (version == 39)
+            {
+                // Il2CppFieldDefinition is { nameIndex(4), typeIndex(2|4), token(4) },
+                // so its on-disk stride tells us the TypeIndex width for this binary.
+                if (header.fieldsCountV39 > 0)
+                {
+                    var stride = header.fieldsSize / header.fieldsCountV39;
+                    WideTypeIndexV39 = stride switch
+                    {
+                        12 => true,
+                        10 => false,
+                        _ => throw new InvalidDataException($"ERROR: unexpected v39 field definition stride {stride}."),
+                    };
+                }
+                Console.WriteLine($"v39 TypeIndex width: {(WideTypeIndexV39 ? 4 : 2)} bytes");
+            }
             if (version == 24)
             {
                 if (header.stringLiteralOffset == 264)
@@ -104,8 +120,13 @@ namespace Il2CppDumper
             fieldDefaultValuesDic = fieldDefaultValues.ToDictionary(x => x.fieldIndex);
             parameterDefaultValuesDic = parameterDefaultValues.ToDictionary(x => x.parameterIndex);
             propertyDefs = ReadMetadataClassArray<Il2CppPropertyDefinition>(header.propertiesOffset, header.propertiesSize);
-            // v39 narrowed the standalone TypeIndex arrays to uint16 as well.
-            if (Version >= 39)
+            // v39 sizes the standalone TypeIndex arrays like every other TypeIndex:
+            // uint16 for small binaries, int32 once the type table exceeds 65535.
+            if (Version >= 39 && WideTypeIndexV39)
+            {
+                interfaceIndices = ReadClassArray<int>(header.interfacesOffset, header.interfacesSize / 4);
+            }
+            else if (Version >= 39)
             {
                 interfaceIndices = Array.ConvertAll(
                     ReadClassArray<ushort>(header.interfacesOffset, header.interfacesSize / 2), WidenIndexV39);
@@ -118,7 +139,11 @@ namespace Il2CppDumper
             eventDefs = ReadMetadataClassArray<Il2CppEventDefinition>(header.eventsOffset, header.eventsSize);
             genericContainers = ReadMetadataClassArray<Il2CppGenericContainer>(header.genericContainersOffset, header.genericContainersSize);
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(header.genericParametersOffset, header.genericParametersSize);
-            if (Version >= 39)
+            if (Version >= 39 && WideTypeIndexV39)
+            {
+                constraintIndices = ReadClassArray<int>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsSize / 4);
+            }
+            else if (Version >= 39)
             {
                 constraintIndices = Array.ConvertAll(
                     ReadClassArray<ushort>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsSize / 2), WidenIndexV39);
@@ -187,6 +212,19 @@ namespace Il2CppDumper
         /// </summary>
         private static int WidenIndexV39(ushort value)
         {
+            return value == ushort.MaxValue ? -1 : value;
+        }
+
+        /// <summary>
+        /// Normalises a [TypeIndexV39] field, which BinaryStream already read as
+        /// either a uint16 or an int32 depending on WideTypeIndexV39.
+        /// </summary>
+        private int WidenIndexV39(int value)
+        {
+            if (WideTypeIndexV39)
+            {
+                return value;
+            }
             return value == ushort.MaxValue ? -1 : value;
         }
 
@@ -404,7 +442,11 @@ namespace Il2CppDumper
                         continue;
                 }
                 var fieldType = i.FieldType;
-                if (fieldType.IsPrimitive)
+                if (IsTypeIndexV39Field(i))
+                {
+                    size += WideTypeIndexV39 ? 4 : 2;
+                }
+                else if (fieldType.IsPrimitive)
                 {
                     size += GetPrimitiveTypeSize(fieldType.Name);
                 }
