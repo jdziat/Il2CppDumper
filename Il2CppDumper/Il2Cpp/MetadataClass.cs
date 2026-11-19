@@ -251,18 +251,21 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int byvalTypeIndex;
         [Version(Min = 39)]
-        public ushort byvalTypeIndexV39;
+        [TypeIndexV39]
+        public int byvalTypeIndexV39;
         [Version(Max = 24.5)]
         public int byrefTypeIndex;
 
         [Version(Max = 38)]
         public int declaringTypeIndex;
         [Version(Min = 39)]
-        public ushort declaringTypeIndexV39;
+        [TypeIndexV39]
+        public int declaringTypeIndexV39;
         [Version(Max = 38)]
         public int parentIndex;
         [Version(Min = 39)]
-        public ushort parentIndexV39;
+        [TypeIndexV39]
+        public int parentIndexV39;
         // v39 dropped elementTypeIndex entirely. Metadata.FixIndexesV39 rebuilds it
         // for enums from the type of their value__ field, which is what it held.
         [Version(Max = 38)]
@@ -336,7 +339,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int returnType;
         [Version(Min = 39)]
-        public ushort returnTypeV39;
+        [TypeIndexV39]
+        public int returnTypeV39;
         [Version(Min = 31)]
         public int returnParameterToken;
         public int parameterStart;
@@ -372,7 +376,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
     }
 
     public class Il2CppFieldDefinition
@@ -381,7 +386,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
         [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 19)]
@@ -394,7 +400,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
         public int dataIndex;
     }
 
@@ -446,7 +453,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
         public int dataIndex;
     }
 
@@ -456,7 +464,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
         public int add;
         public int remove;
         public int raise;
@@ -482,7 +491,8 @@ namespace Il2CppDumper
         [Version(Max = 38)]
         public int typeIndex;
         [Version(Min = 39)]
-        public ushort typeIndexV39;
+        [TypeIndexV39]
+        public int typeIndexV39;
         public int fieldIndex; // local offset into type fields
     }
 
